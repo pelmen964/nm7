@@ -26,9 +26,10 @@ namespace nm7
         private readonly double _eps;
         private double _integralSum;
         private int _iterationCount;
-        private double _pression;
+        private double _accuracy;
         private double[] _abscissasOfIntegrationPoints;
         private double[] _gaussCoeffs;
+        private readonly int _funcType;
 
         public Task(string inputFileName)
         {
@@ -41,8 +42,9 @@ namespace nm7
                 Converter<string, double> parseStringToDouble = str => double.Parse(str);
                 _borders = Array.ConvertAll(fstream.ReadLine().Split(), parseStringToDouble);
                 _xGridNodes = Array.ConvertAll(fstream.ReadLine().Split(), parseStringToDouble);
-                _func = fstream.ReadLine();
+                _funcType = int.Parse(fstream.ReadLine() ?? "0");
                 _yGridNodes = Array.ConvertAll(fstream.ReadLine().Split(), parseStringToDouble);
+                _func = fstream.ReadLine();
                 _eps = double.Parse(fstream.ReadLine() ?? "0");
             }
         }
@@ -60,10 +62,12 @@ namespace nm7
             return (double)(localExpr.Substitute("x", x).EvalNumerical());
         }
 
-        public double IntegrateWithLefthanded()
+        public string IntegrateWithLefthanded()
         {
+            var sb = new StringBuilder();
+            sb.AppendLine("Левые прямоуголники:");
             _integralSum = 0;
-            _pression = 0;
+            _accuracy = 0;
             switch (_gridType)
             {
                 case 1: // сетка равномерная
@@ -71,42 +75,66 @@ namespace nm7
                     for (double i = _borders[0]; i < _borders[1]; i += lenOfInterval)
                     {
                         _integralSum += F(i) * lenOfInterval;
-                        _pression += F(i+lenOfInterval/2, 1) * lenOfInterval * lenOfInterval / 2;
+                        _accuracy += F(i+lenOfInterval/2, 1) * lenOfInterval * lenOfInterval / 2;
                     }
+                    break;
 
-                    return _integralSum;
-
-                case 2:
-                    for (int i = 1; i < _xGridNodes.Length; i++)
+                case 2: // неравномерная сетка
+                    if (_funcType == 1) // Табличные значения
                     {
-                        _integralSum += _yGridNodes[i-1] * (_xGridNodes[i] - _xGridNodes[i - 1]);
-                        _pression += F(_yGridNodes[i-1], 1) * (_xGridNodes[i] - _xGridNodes[i - 1]) * (_xGridNodes[i] - _xGridNodes[i - 1]) / 2;
+                        for (int i = 1; i < _xGridNodes.Length; i++)
+                        {
+                            _integralSum += _yGridNodes[i-1] * (_xGridNodes[i] - _xGridNodes[i - 1]);
+                            _accuracy += F(_xGridNodes[i-1], 1) * (_xGridNodes[i] - _xGridNodes[i - 1]) * (_xGridNodes[i] - _xGridNodes[i - 1]) / 2;
+                        }
                     }
+                    else // Аналитическая функция
+                    {
+                        for (int i = 1; i < _xGridNodes.Length; i++)
+                        {
+                            _integralSum += (F(_xGridNodes[i-1]) * (_xGridNodes[i] - _xGridNodes[i - 1]));
+                            _accuracy += F(_xGridNodes[i-1], 1) * (_xGridNodes[i] - _xGridNodes[i - 1]) * (_xGridNodes[i] - _xGridNodes[i - 1]) / 2;
+                        }
+                    }
+                    break;
 
-                    return _integralSum;
                 case 3: // Динамическая сетка (просто жеееесть)
-                    double internalStep = _eps;
-                    double currentX = _borders[0] + internalStep;
-                    _integralSum += F(_borders[0]) * internalStep;
+                    double internalStep = 0;
+                    double currentX = _borders[0];
+                    int cnt = 0;
                     while (currentX < _borders[1])
                     {
+                        cnt++;
                         _integralSum += F(currentX) * internalStep;
+                        internalStep = F(currentX, 1)*_eps;
+                        if (internalStep == 0)
+                        {
+                            internalStep = _eps;
+                        }
                         // Расчитываю по формуле 9.33 из большой методички стр. 169
-                        internalStep = (_borders[1] - _borders[0]) / 2 * internalStep * F(currentX, 1);
-                        _pression += (_borders[1] - _borders[0]) / 2 * internalStep * F(currentX, 1);
+                        _accuracy += F(currentX, 1) / 2 * internalStep*internalStep;
+                        currentX += internalStep;
                     }
 
                     _integralSum += F(_borders[1]) * internalStep;
+                    _accuracy += F(_borders[1], 1) / 2 * internalStep*internalStep;
+                    sb.AppendLine("Iters: " + cnt);
+                    break;
 
-                    return _integralSum;
                 default:
                     throw new ArgumentException();
             }
+
+            sb.AppendLine("Sum: "+_integralSum);
+            sb.AppendLine("Eps: "+_accuracy);
+            return sb.ToString();
         }
-        public double IntegrateWithRighthanded()
+        public string IntegrateWithRighthanded()
         {
+            var sb = new StringBuilder();
+            sb.AppendLine("Правые прямоуголники:");
             _integralSum = 0;
-            _pression = 0;
+            _accuracy = 0;
             switch (_gridType)
             {
                 case 1: // сетка равномерная
@@ -114,38 +142,122 @@ namespace nm7
                     for (double i = _borders[0]+lenOfInterval; i <= _borders[1]; i += lenOfInterval)
                     {
                         _integralSum += F(i) * lenOfInterval;
-                        _pression += F(i+lenOfInterval/2, 1) * lenOfInterval * lenOfInterval / 2;
+                        _accuracy += F(i, 1) * lenOfInterval * lenOfInterval / 2;
                     }
+                    break;
 
-                    return _integralSum;
-
-                case 2:
-                    for (int i = 1; i < _xGridNodes.Length; i++)
+                case 2: // неравномерная сетка
+                    if (_funcType == 1) // Табличные значения
                     {
-                        _integralSum += _yGridNodes[i] * (_xGridNodes[i] - _xGridNodes[i - 1]);
-                        _pression += F(_yGridNodes[i-1], 1) * (_xGridNodes[i] - _xGridNodes[i - 1]) * (_xGridNodes[i] - _xGridNodes[i - 1]) / 2
+                        for (int i = 1; i < _xGridNodes.Length; i++)
+                        {
+                            _integralSum += _yGridNodes[i] * (_xGridNodes[i] - _xGridNodes[i - 1]);
+                            _accuracy += F(_xGridNodes[i], 1) * (_xGridNodes[i] - _xGridNodes[i - 1]) * (_xGridNodes[i] - _xGridNodes[i - 1]) / 2;
+                        }
                     }
+                    else // Аналитическая функция
+                    {
+                        for (int i = 1; i < _xGridNodes.Length; i++)
+                        {
+                            _integralSum += (F(_xGridNodes[i]) * (_xGridNodes[i] - _xGridNodes[i - 1]));
+                            _accuracy += F(_xGridNodes[i], 1) * (_xGridNodes[i] - _xGridNodes[i - 1]) * (_xGridNodes[i] - _xGridNodes[i - 1]) / 2;
+                        }
+                    }
+                    break;
 
-                    return _integralSum;
-                case 3:
+                case 3: // Динамическая сетка (просто жеееесть)
                     double internalStep = _eps;
                     double currentX = _borders[0] + internalStep;
-                    while (currentX <= _borders[1])
+                    _integralSum += F(_borders[0]) * internalStep;
+                    int cnt = 0;
+                    while (currentX < _borders[1])
                     {
+                        cnt++;
                         _integralSum += F(currentX) * internalStep;
                         // Расчитываю по формуле 9.33 из большой методички стр. 169
-                        internalStep = (_borders[1] - _borders[0]) / 2 * internalStep * F(currentX, 1);
-                        _pression = (_borders[1] - _borders[0]) / 2 * internalStep * F(currentX, 1);
+                        _accuracy += F(currentX, 1) / 2 * internalStep*internalStep ;
+                        internalStep = F(currentX, 1)*_eps;
+                        currentX += internalStep;
                     }
 
                     _integralSum += F(_borders[1]) * internalStep;
+                    _accuracy += F(_borders[1], 1) / 2 * internalStep*internalStep;
+                    sb.AppendLine("Iters: " + cnt);
+                    break;
 
-                    return _integralSum;
                 default:
                     throw new ArgumentException();
             }
+
+            sb.AppendLine("Sum: "+_integralSum);
+            sb.AppendLine("Eps: "+_accuracy);
+            return sb.ToString();
         }
-        public double 
+
+        public string IntegrateWithTrapeze()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("Трапеции:");
+            _integralSum = 0;
+            _accuracy = 0;
+            switch (_gridType)
+            {
+                case 1: // сетка равномерная
+                    double lenOfInterval = (_borders[1] - _borders[0]) / _numberOfintervals;
+                    for (double i = _borders[0]; i < _borders[1]; i += lenOfInterval)
+                    {
+                        _integralSum += (F(i)+F(i+lenOfInterval)) * lenOfInterval/2;
+                        // По формуле 9.12
+                        _accuracy += Math.Pow(lenOfInterval,3) / 12 * F(i+lenOfInterval/2,2);
+                    }
+                    break;
+
+                case 2: // неравномерная сетка
+                    if (_funcType == 1) // Табличные значения
+                    {
+                        for (int i = 1; i < _xGridNodes.Length; i++)
+                        {
+                            _integralSum += (_yGridNodes[i-1]+_yGridNodes[i]) * (_xGridNodes[i] - _xGridNodes[i - 1])/2;
+                            _accuracy += Math.Pow(_xGridNodes[i] - _xGridNodes[i - 1],3)/12 * F(_xGridNodes[i] + _xGridNodes[i - 1]/2,2);
+                        }
+                    }
+                    else // Аналитическая функция
+                    {
+                        for (int i = 1; i < _xGridNodes.Length; i++)
+                        {
+                            _integralSum += (F(_xGridNodes[i-1])+F(_xGridNodes[i])) * (_xGridNodes[i] - _xGridNodes[i - 1])/2;
+                            _accuracy += Math.Pow((_xGridNodes[i] - _xGridNodes[i - 1]), 3) / 12 *
+                                         F(_xGridNodes[i] + _xGridNodes[i - 1] / 2, 2);
+                        }
+                    }
+                    break;
+                
+                case 3: // Динамическая сетка
+                    double internalStep = _eps;
+                    double currentX = _borders[0] + internalStep;
+                    int cnt = 0;
+                    while (currentX < _borders[1])
+                    {
+                        cnt++;
+                        _integralSum += (F(currentX)+F(currentX-internalStep)) * internalStep/2;
+                        _accuracy += Math.Pow(internalStep,3) / 12 * F(currentX-internalStep/2,2);
+                        internalStep = F(currentX, 1)*_eps;
+                        currentX += internalStep;
+                    }
+                    
+                    _integralSum += (F(_borders[1])+F(currentX-internalStep)) * (_borders[1]-currentX+internalStep)/2;
+                    _accuracy += Math.Pow(currentX-_borders[1],3) / 12 * F(currentX-internalStep/2,2);
+                    sb.AppendLine("Iters: " + cnt);
+                    break;
+
+                default:
+                    throw new ArgumentException();
+            }
+
+            sb.AppendLine("Sum: "+_integralSum);
+            sb.AppendLine("Eps: "+_accuracy);
+            return sb.ToString();
+        }
         
     }
 }
