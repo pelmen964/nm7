@@ -75,8 +75,9 @@ namespace nm7
                     for (double i = _borders[0]; i < _borders[1]; i += lenOfInterval)
                     {
                         _integralSum += F(i) * lenOfInterval;
-                        _accuracy += F(i+lenOfInterval/2, 1) * lenOfInterval * lenOfInterval / 2;
+                        _accuracy += F(i + lenOfInterval / 2, 1) * lenOfInterval * lenOfInterval / 2;
                     }
+
                     break;
 
                 case 2: // неравномерная сетка
@@ -84,18 +85,21 @@ namespace nm7
                     {
                         for (int i = 1; i < _xGridNodes.Length; i++)
                         {
-                            _integralSum += _yGridNodes[i-1] * (_xGridNodes[i] - _xGridNodes[i - 1]);
-                            _accuracy += F(_xGridNodes[i-1], 1) * (_xGridNodes[i] - _xGridNodes[i - 1]) * (_xGridNodes[i] - _xGridNodes[i - 1]) / 2;
+                            _integralSum += _yGridNodes[i - 1] * (_xGridNodes[i] - _xGridNodes[i - 1]);
+                            _accuracy += F(_xGridNodes[i - 1], 1) * (_xGridNodes[i] - _xGridNodes[i - 1]) *
+                                (_xGridNodes[i] - _xGridNodes[i - 1]) / 2;
                         }
                     }
                     else // Аналитическая функция
                     {
                         for (int i = 1; i < _xGridNodes.Length; i++)
                         {
-                            _integralSum += (F(_xGridNodes[i-1]) * (_xGridNodes[i] - _xGridNodes[i - 1]));
-                            _accuracy += F(_xGridNodes[i-1], 1) * (_xGridNodes[i] - _xGridNodes[i - 1]) * (_xGridNodes[i] - _xGridNodes[i - 1]) / 2;
+                            _integralSum += (F(_xGridNodes[i - 1]) * (_xGridNodes[i] - _xGridNodes[i - 1]));
+                            _accuracy += F(_xGridNodes[i - 1], 1) * (_xGridNodes[i] - _xGridNodes[i - 1]) *
+                                (_xGridNodes[i] - _xGridNodes[i - 1]) / 2;
                         }
                     }
+
                     break;
 
                 case 3: // Динамическая сетка (просто жеееесть)
@@ -106,18 +110,19 @@ namespace nm7
                     {
                         cnt++;
                         _integralSum += F(currentX) * internalStep;
-                        internalStep = F(currentX, 1)*_eps;
+                        internalStep = F(currentX, 1) * _eps;
                         if (internalStep == 0)
                         {
                             internalStep = _eps;
                         }
+
                         // Расчитываю по формуле 9.33 из большой методички стр. 169
-                        _accuracy += F(currentX, 1) / 2 * internalStep*internalStep;
+                        _accuracy += F(currentX, 1) / 2 * internalStep * internalStep;
                         currentX += internalStep;
                     }
 
                     _integralSum += F(_borders[1]) * internalStep;
-                    _accuracy += F(_borders[1], 1) / 2 * internalStep*internalStep;
+                    _accuracy += F(_borders[1], 1) / 2 * internalStep * internalStep;
                     sb.AppendLine("Iters: " + cnt);
                     break;
 
@@ -125,10 +130,11 @@ namespace nm7
                     throw new ArgumentException();
             }
 
-            sb.AppendLine("Sum: "+_integralSum);
-            sb.AppendLine("Eps: "+_accuracy);
+            sb.AppendLine("Sum: " + _integralSum);
+            sb.AppendLine("Eps: " + _accuracy);
             return sb.ToString();
         }
+
         public string IntegrateWithRighthanded()
         {
             var sb = new StringBuilder();
@@ -139,11 +145,12 @@ namespace nm7
             {
                 case 1: // сетка равномерная
                     double lenOfInterval = (_borders[1] - _borders[0]) / _numberOfintervals;
-                    for (double i = _borders[0]+lenOfInterval; i <= _borders[1]; i += lenOfInterval)
+                    for (double i = _borders[0] + lenOfInterval; i <= _borders[1]; i += lenOfInterval)
                     {
                         _integralSum += F(i) * lenOfInterval;
                         _accuracy += F(i, 1) * lenOfInterval * lenOfInterval / 2;
                     }
+
                     break;
 
                 case 2: // неравномерная сетка
@@ -152,7 +159,8 @@ namespace nm7
                         for (int i = 1; i < _xGridNodes.Length; i++)
                         {
                             _integralSum += _yGridNodes[i] * (_xGridNodes[i] - _xGridNodes[i - 1]);
-                            _accuracy += F(_xGridNodes[i], 1) * (_xGridNodes[i] - _xGridNodes[i - 1]) * (_xGridNodes[i] - _xGridNodes[i - 1]) / 2;
+                            _accuracy += F(_xGridNodes[i], 1) * (_xGridNodes[i] - _xGridNodes[i - 1]) *
+                                (_xGridNodes[i] - _xGridNodes[i - 1]) / 2;
                         }
                     }
                     else // Аналитическая функция
@@ -160,9 +168,11 @@ namespace nm7
                         for (int i = 1; i < _xGridNodes.Length; i++)
                         {
                             _integralSum += (F(_xGridNodes[i]) * (_xGridNodes[i] - _xGridNodes[i - 1]));
-                            _accuracy += F(_xGridNodes[i], 1) * (_xGridNodes[i] - _xGridNodes[i - 1]) * (_xGridNodes[i] - _xGridNodes[i - 1]) / 2;
+                            _accuracy += F(_xGridNodes[i], 1) * (_xGridNodes[i] - _xGridNodes[i - 1]) *
+                                (_xGridNodes[i] - _xGridNodes[i - 1]) / 2;
                         }
                     }
+
                     break;
 
                 case 3: // Динамическая сетка (просто жеееесть)
@@ -175,13 +185,13 @@ namespace nm7
                         cnt++;
                         _integralSum += F(currentX) * internalStep;
                         // Расчитываю по формуле 9.33 из большой методички стр. 169
-                        _accuracy += F(currentX, 1) / 2 * internalStep*internalStep ;
-                        internalStep = F(currentX, 1)*_eps;
+                        _accuracy += F(currentX, 1) / 2 * internalStep * internalStep;
+                        internalStep = F(currentX, 1) * _eps;
                         currentX += internalStep;
                     }
 
                     _integralSum += F(_borders[1]) * internalStep;
-                    _accuracy += F(_borders[1], 1) / 2 * internalStep*internalStep;
+                    _accuracy += F(_borders[1], 1) / 2 * internalStep * internalStep;
                     sb.AppendLine("Iters: " + cnt);
                     break;
 
@@ -189,8 +199,8 @@ namespace nm7
                     throw new ArgumentException();
             }
 
-            sb.AppendLine("Sum: "+_integralSum);
-            sb.AppendLine("Eps: "+_accuracy);
+            sb.AppendLine("Sum: " + _integralSum);
+            sb.AppendLine("Eps: " + _accuracy);
             return sb.ToString();
         }
 
@@ -206,10 +216,11 @@ namespace nm7
                     double lenOfInterval = (_borders[1] - _borders[0]) / _numberOfintervals;
                     for (double i = _borders[0]; i < _borders[1]; i += lenOfInterval)
                     {
-                        _integralSum += (F(i)+F(i+lenOfInterval)) * lenOfInterval/2;
+                        _integralSum += (F(i) + F(i + lenOfInterval)) * lenOfInterval / 2;
                         // По формуле 9.12
-                        _accuracy += Math.Pow(lenOfInterval,3) / 12 * F(i+lenOfInterval/2,2);
+                        _accuracy += Math.Pow(lenOfInterval, 3) / 12 * F(i + lenOfInterval / 2, 2);
                     }
+
                     break;
 
                 case 2: // неравномерная сетка
@@ -217,21 +228,25 @@ namespace nm7
                     {
                         for (int i = 1; i < _xGridNodes.Length; i++)
                         {
-                            _integralSum += (_yGridNodes[i-1]+_yGridNodes[i]) * (_xGridNodes[i] - _xGridNodes[i - 1])/2;
-                            _accuracy += Math.Pow(_xGridNodes[i] - _xGridNodes[i - 1],3)/12 * F(_xGridNodes[i] + _xGridNodes[i - 1]/2,2);
+                            _integralSum += (_yGridNodes[i - 1] + _yGridNodes[i]) *
+                                (_xGridNodes[i] - _xGridNodes[i - 1]) / 2;
+                            _accuracy += Math.Pow(_xGridNodes[i] - _xGridNodes[i - 1], 3) / 12 *
+                                         F(_xGridNodes[i] + _xGridNodes[i - 1] / 2, 2);
                         }
                     }
                     else // Аналитическая функция
                     {
                         for (int i = 1; i < _xGridNodes.Length; i++)
                         {
-                            _integralSum += (F(_xGridNodes[i-1])+F(_xGridNodes[i])) * (_xGridNodes[i] - _xGridNodes[i - 1])/2;
+                            _integralSum += (F(_xGridNodes[i - 1]) + F(_xGridNodes[i])) *
+                                (_xGridNodes[i] - _xGridNodes[i - 1]) / 2;
                             _accuracy += Math.Pow((_xGridNodes[i] - _xGridNodes[i - 1]), 3) / 12 *
                                          F(_xGridNodes[i] + _xGridNodes[i - 1] / 2, 2);
                         }
                     }
+
                     break;
-                
+
                 case 3: // Динамическая сетка
                     double internalStep = _eps;
                     double currentX = _borders[0] + internalStep;
@@ -239,14 +254,15 @@ namespace nm7
                     while (currentX < _borders[1])
                     {
                         cnt++;
-                        _integralSum += (F(currentX)+F(currentX-internalStep)) * internalStep/2;
-                        _accuracy += Math.Pow(internalStep,3) / 12 * F(currentX-internalStep/2,2);
-                        internalStep = F(currentX, 1)*_eps;
+                        _integralSum += (F(currentX) + F(currentX - internalStep)) * internalStep / 2;
+                        _accuracy += Math.Pow(internalStep, 3) / 12 * F(currentX - internalStep / 2, 2);
+                        internalStep = F(currentX, 1) * _eps;
                         currentX += internalStep;
                     }
-                    
-                    _integralSum += (F(_borders[1])+F(currentX-internalStep)) * (_borders[1]-currentX+internalStep)/2;
-                    _accuracy += Math.Pow(currentX-_borders[1],3) / 12 * F(currentX-internalStep/2,2);
+
+                    _integralSum += (F(_borders[1]) + F(currentX - internalStep)) *
+                        (_borders[1] - currentX + internalStep) / 2;
+                    _accuracy += Math.Pow(currentX - _borders[1], 3) / 12 * F(currentX - internalStep / 2, 2);
                     sb.AppendLine("Iters: " + cnt);
                     break;
 
@@ -254,10 +270,80 @@ namespace nm7
                     throw new ArgumentException();
             }
 
-            sb.AppendLine("Sum: "+_integralSum);
-            sb.AppendLine("Eps: "+_accuracy);
+            sb.AppendLine("Sum: " + _integralSum);
+            sb.AppendLine("Eps: " + _accuracy);
             return sb.ToString();
         }
-        
+
+        public string IntegrateWithSimpson()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("Симпсон:");
+            _integralSum = 0;
+            _accuracy = 0;
+            double coeff, accuracyCoeff;
+            switch (_gridType)
+            {
+                case 1: // Сетка равномерная
+                    double lenOfInterval = (_borders[1] - _borders[0]) / _numberOfintervals;
+                    double doubleLen = 2 * lenOfInterval;
+                    coeff = 2 * lenOfInterval / 6;
+                    accuracyCoeff = Math.Pow(lenOfInterval, 5);
+                    for (double i = _borders[0] + doubleLen; i <= _borders[1]; i += doubleLen)
+                    {
+                        _integralSum += coeff * (F(i - doubleLen) + 4 * F(i - lenOfInterval) + F(i));
+                        // По формуле 9.18
+                        _accuracy += accuracyCoeff / 180 * F(i - lenOfInterval, 4);
+                    }
+
+                    break;
+
+                case 3: // Динамическая сетка
+                    double internalStep = _eps;
+                    double currentX = _borders[0] + 2 * internalStep;
+                    int cnt = 0;
+                    while (currentX < _borders[1])
+                    {
+                        cnt++;
+                        _integralSum += 2 * internalStep / 6 *
+                                        (F(currentX - internalStep * 2) + 4 * F(currentX - internalStep) +
+                                         F(currentX));
+
+                        _accuracy += Math.Pow(internalStep, 5) / 180 * F(currentX - internalStep, 4);
+                        internalStep = F(currentX, 1) * _eps;
+                        currentX += 2 * internalStep;
+                    }
+
+                    double lastStep =  2 * internalStep;
+                    double stepToBorder = _borders[1] - (currentX-lastStep);
+                    _integralSum += 1 * stepToBorder / 6 *
+                                    (F(currentX - lastStep) + 4 * F((_borders[1] + (currentX-lastStep))/2) +
+                                     F(_borders[1]));
+                    _accuracy += Math.Pow(lastStep / 2, 5) / 180 * F(_borders[1] - lastStep / 2, 4);
+                    sb.AppendLine("Iters: " + cnt);
+                    break;
+
+                default:
+                    throw new ArgumentException();
+            }
+
+            sb.AppendLine("Sum: " + _integralSum);
+            sb.AppendLine("Eps: " + _accuracy);
+            return sb.ToString();
+        }
+
+        public string IntegrateWithChebyshev()
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("Чебышев:");
+            _integralSum = 0;
+            _accuracy = 0;
+            switch (_gridType)
+            {
+                
+            }
+
+            return sb.ToString();
+        }
     }
 }
