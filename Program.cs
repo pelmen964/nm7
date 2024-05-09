@@ -17,6 +17,7 @@ namespace nm7
             Out.WriteLine(task.IntegrateWithRighthanded());
             Out.WriteLine(task.IntegrateWithTrapeze());
             Out.WriteLine(task.IntegrateWithSimpson());
+            Out.WriteLine(task.IntegrateWithGauss());
             // double[] a = new[] { 0, 0.1, 0.3, 0.5, 0.8, 1.2, 2, 3 };
             // foreach (var j1 in a)
             // {

@@ -314,10 +314,10 @@ namespace nm7
                         currentX += 2 * internalStep;
                     }
 
-                    double lastStep =  2 * internalStep;
-                    double stepToBorder = _borders[1] - (currentX-lastStep);
+                    double lastStep = 2 * internalStep;
+                    double stepToBorder = _borders[1] - (currentX - lastStep);
                     _integralSum += 1 * stepToBorder / 6 *
-                                    (F(currentX - lastStep) + 4 * F((_borders[1] + (currentX-lastStep))/2) +
+                                    (F(currentX - lastStep) + 4 * F((_borders[1] + (currentX - lastStep)) / 2) +
                                      F(_borders[1]));
                     _accuracy += Math.Pow(lastStep / 2, 5) / 180 * F(_borders[1] - lastStep / 2, 4);
                     sb.AppendLine("Iters: " + cnt);
@@ -332,18 +332,30 @@ namespace nm7
             return sb.ToString();
         }
 
-        public string IntegrateWithChebyshev()
+        public string IntegrateWithGauss()
         {
             var sb = new StringBuilder();
-            sb.AppendLine("Чебышев:");
+            sb.AppendLine("Гаус:");
             _integralSum = 0;
             _accuracy = 0;
-            switch (_gridType)
-            {
-                
-            }
+            int n = 2; // Степень полинома
+            double[] w = { 1.0, 1.0 }; // весовые коэффициенты из таблицы 9.1
+            double[] x = { -0.577350269, +0.577350269 }; // значения аргумента из таблицы 9.1
 
+
+            for (int i = 0; i < n; i++)
+            {
+                // По формуле 9.19
+                _integralSum += 0.5 * (_borders[1] - _borders[0]) * w[i] *
+                                F(0.5 * (_borders[0] + _borders[1]) + 0.5 * (_borders[1] - _borders[0]) * x[i]);
+                sb.AppendLine($"abciss{i+1}: {x[i]}");
+                sb.AppendLine($"A{i+1}: {w[i]}");
+            }
+            sb.AppendLine("Sum: " + _integralSum);
+            _accuracy = Math.Pow((_borders[1] - _borders[0])/2, 5) / 135 * F((_borders[1] + _borders[0]), 4);
+            sb.AppendLine("Eps: " + _accuracy);
             return sb.ToString();
         }
     }
 }
+
